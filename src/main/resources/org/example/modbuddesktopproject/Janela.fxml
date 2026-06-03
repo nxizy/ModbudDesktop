@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.modbuddesktopproject.controller.ModbusController">
+   <children>
+      <Label layoutX="437.0" layoutY="21.0" prefHeight="58.0" prefWidth="444.0" text="Sistema de Comunicação Modbus" textAlignment="CENTER">
+         <font>
+            <Font name="System Bold" size="28.0" />
+         </font>
+      </Label>
+      <Label layoutX="463.0" layoutY="360.0" text="Porta COM">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <ComboBox fx:id="comboPorts" layoutX="463.0" layoutY="387.0" onAction="#setSelectedPort" prefHeight="26.0" prefWidth="321.0" />
+      <Button fx:id="btnRefreshPorts" layoutX="792.0" layoutY="388.0" mnemonicParsing="false" text="Atualizar" />
+      <Button fx:id="btnEnviar" layoutX="633.0" layoutY="538.0" mnemonicParsing="false" onAction="#setSelectedPort" text="Button" />
+      <Label layoutX="383.0" layoutY="203.0" prefHeight="27.0" prefWidth="110.0" text="Id do Escravo">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <TextField fx:id="inputSlaveId" layoutX="383.0" layoutY="234.0" onAction="#setSlaveId" />
+      <TextField fx:id="inputAddress" layoutX="590.0" layoutY="234.0" />
+      <Label layoutX="590.0" layoutY="204.0" prefHeight="27.0" prefWidth="79.0" text="Endereço">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label layoutX="792.0" layoutY="204.0" prefHeight="27.0" prefWidth="173.0" text="Quantidade de bits">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <TextField fx:id="inputBitQuantity" layoutX="792.0" layoutY="234.0" onAction="#setBitQuantity" prefHeight="25.0" prefWidth="173.0" />
+   </children>
+</AnchorPane>

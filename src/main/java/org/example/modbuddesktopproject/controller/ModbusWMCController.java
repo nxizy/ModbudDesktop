@@ -7,16 +7,12 @@ import javafx.scene.control.*;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
 import org.example.modbuddesktopproject.Services.ModbusService;
 import org.example.modbuddesktopproject.Services.SerialService;
-import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRequestDTO;
-import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusResponseDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRequestDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCResponseDTO;
 
 import java.util.function.UnaryOperator;
 
-
-public class ModbusController {
-
+public class ModbusWMCController {
     private final SerialService serialService = new SerialService();
 
     @FXML private ComboBox<String> comboPorts;
@@ -24,6 +20,7 @@ public class ModbusController {
     @FXML private TextField inputSlaveId;
     @FXML private TextField inputAddress;
     @FXML private TextField inputBitQuantity;
+    @FXML private TextField inputCoils;
     @FXML private TextArea txtASentData;
     @FXML private TextArea txtAReceivedData;
     @FXML private TextArea txtAStatus;
@@ -61,14 +58,53 @@ public class ModbusController {
 
     }
 
-    public void setSelectedPort(){
-        selectedPort = serialService.getPort(comboPorts.getValue());
-        System.out.println(selectedPort);
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Porta selecionada");
-        alert.setHeaderText(null);
-        alert.setContentText(comboPorts.getValue());
-        alert.showAndWait();
+    public void sendModbusWMCRequest() throws InterruptedException{
+
+    }
+
+    private Task<ModbusWMCResponseDTO> getModbusWMCResponseDTOTask(ModbusWMCRequestDTO request, Alert loading) {
+        Task<ModbusWMCResponseDTO> task =
+                new Task<>() {
+                    @Override
+                    protected ModbusWMCResponseDTO call() throws Exception {
+                        return ModbusService.writeMultipleCoils(request, selectedPort);
+                    }
+                };
+
+        task.setOnSucceeded(event -> {
+            loading.close();
+
+            ModbusWMCResponseDTO res = task.getValue();
+
+            txtASentData.setText(ModbusResponse.printFrame(res.getSentBytes(), res.getSentBytes().length));
+            txtAReceivedData.setText(ModbusResponse.printFrame(res.getReceivedBytes(), res.getReceivedBytes().length));
+            StringBuilder errorMessage = new StringBuilder();
+            if(res.isHasCrcError()){
+                errorMessage.append("Erro no CRC. ");
+            }
+            if(res.isHasModbusError()){
+                errorMessage.append("Erro no Modbus. ");
+            }
+            if(res.isHasAddressError()){
+                errorMessage.append("Erro no endereço. ");
+            }
+            if(res.isHasQuantityError()){
+                errorMessage.append("Erro na quantidade de bytes. ");
+            }
+            if(!res.isHasCrcError() && !res.isHasModbusError() && !res.isHasAddressError() && !res.isHasQuantityError()) {
+                errorMessage.append("Sem erros");
+            }
+            txtAStatus.setText(errorMessage.toString());
+        });
+
+        task.setOnFailed(event -> {
+
+            loading.close();
+
+            task.getException()
+                    .printStackTrace();
+        });
+        return task;
     }
 
     public void setSlaveId(){
@@ -99,58 +135,14 @@ public class ModbusController {
         address = Integer.parseInt(text);
     }
 
-    public void sendModbusRequest() throws InterruptedException {
-        ModbusRequestDTO request = ModbusRequestDTO.builder()
-                .slaveId(slaveId)
-                .address(address)
-                .quantity(bitQuantity)
-                .build();
-        Alert loading = new Alert(Alert.AlertType.INFORMATION);
-        loading.setTitle("Carregando");
-        loading.setHeaderText(null);
-        loading.setContentText("Lendo registradores...");
-        loading.show();
-        Task<ModbusResponseDTO> task = getModbusResponseDTOTask(request, loading);
-        new Thread(task).start();
-
-    }
-
-    private Task<ModbusResponseDTO> getModbusResponseDTOTask(ModbusRequestDTO request, Alert loading) {
-        Task<ModbusResponseDTO> task =
-                new Task<>() {
-                    @Override
-                    protected ModbusResponseDTO call() throws Exception {
-                        return ModbusService.readHoldingRegisters(request, selectedPort);
-                    }
-                };
-
-        task.setOnSucceeded(event -> {
-            loading.close();
-
-            ModbusResponseDTO res = task.getValue();
-
-            txtASentData.setText(ModbusResponse.printFrame(res.getSentBytes(), res.getSentBytes().length));
-            txtAReceivedData.setText(ModbusResponse.printFrame(res.getReceivedBytes(), res.getReceivedBytes().length));
-            if(res.isHasCrcError()){
-                txtAStatus.setText("Erro no CRC.");
-            }
-            if(res.isHasModbusError()){
-                txtAStatus.setText("Erro no Modbus");
-            }
-            if(res.isHasModbusError() && res.isHasCrcError()){
-                txtAStatus.setText("Erro no CRC e no Modbus");
-            }
-            txtAStatus.setText(String.valueOf(ModbusResponse.extractRegisterValue(res.getReceivedBytes())));
-        });
-
-        task.setOnFailed(event -> {
-
-            loading.close();
-
-            task.getException()
-                    .printStackTrace();
-        });
-        return task;
+    public void setSelectedPort(){
+        selectedPort = serialService.getPort(comboPorts.getValue());
+        System.out.println(selectedPort);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Porta selecionada");
+        alert.setHeaderText(null);
+        alert.setContentText(comboPorts.getValue());
+        alert.showAndWait();
     }
 
     private void loadPorts(){

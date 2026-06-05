@@ -62,5 +62,7 @@
             <Font size="18.0" />
          </font>
       </Label>
+
+      <ComboBox fx:id="funcoesCom" onAction="#initialize" prefHeight="26.0" prefWidth="300.0"></ComboBox>
    </children>
 </AnchorPane>

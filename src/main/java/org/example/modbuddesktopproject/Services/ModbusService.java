@@ -1,6 +1,7 @@
 package org.example.modbuddesktopproject.Services;
 
 import com.fazecast.jSerialComm.SerialPort;
+import javafx.concurrent.Task;
 import org.example.modbuddesktopproject.Modbus.CRC16;
 import org.example.modbuddesktopproject.Modbus.ModbusFrame;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
@@ -9,7 +10,7 @@ import org.example.modbuddesktopproject.models.ModbusResponseDTO;
 
 public class ModbusService {
 
-    public ModbusResponseDTO readHoldingRegisters(ModbusRequestDTO request, SerialPort port) throws InterruptedException {
+    public static ModbusResponseDTO readHoldingRegisters(ModbusRequestDTO request, SerialPort port) throws InterruptedException {
         byte[] req = ModbusFrame.readHoldingRegisters(request.getSlaveId(), request.getAddress(), request.getQuantity());
         port.setComPortParameters(
                 9600,

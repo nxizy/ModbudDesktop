@@ -18,4 +18,27 @@ public class ModbusResponse {
     public static int extractRegisterValue(byte[] res){
         return ((res[3] & 0xFF) << 8) | (res[4] & 0xFF);
     }
+
+    // Read Coils
+    public static String extractCoils(
+            byte[] coilBytes,
+            int startAddress,
+            int quantity
+    ) {
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < quantity; i++) {
+
+            boolean coil = ((coilBytes[i / 8] >> (i % 8)) & 1) == 1;
+
+            sb.append("Coil ")
+                    .append(startAddress + i)
+                    .append(": ")
+                    .append(coil ? "ON" : "OFF")
+                    .append("\n");
+        }
+
+        return sb.toString();
+    }
 }

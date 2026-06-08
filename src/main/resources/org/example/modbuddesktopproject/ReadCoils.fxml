@@ -63,5 +63,6 @@
             <Font size="18.0" />
          </font>
       </Label>
+      <Button layoutX="65.0" layoutY="73.0" mnemonicParsing="false" onAction="#irParaMain" prefHeight="35.0" prefWidth="159.0" text="Voltar para Menu Principal" />
    </children>
 </AnchorPane>

@@ -4,12 +4,9 @@ import com.fazecast.jSerialComm.SerialPort;
 import org.example.modbuddesktopproject.Modbus.CRC16;
 import org.example.modbuddesktopproject.Modbus.ModbusFrame;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
-import org.example.modbuddesktopproject.models.ModbusRequestDTO;
-import org.example.modbuddesktopproject.models.ModbusResponseDTO;
-import org.example.modbuddesktopproject.models.ReadCoilsRequestDTO;
-import org.example.modbuddesktopproject.models.ReadCoilsResponseDTO;
-import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRequestDTO;
-import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusResponseDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.*;
+import org.example.modbuddesktopproject.models.ReadCoils.ReadCoilsRequestDTO;
+import org.example.modbuddesktopproject.models.ReadCoils.ReadCoilsResponseDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRequestDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCResponseDTO;
 
@@ -89,7 +86,7 @@ public class ModbusService {
         if (exceptionResponse) {
             crcError = !CRC16.validateCRC(res, 5);
         } else {
-            crcError = !CRC16.validateCRC(res, bytesRead);
+            crcError = !CRC16.validateCRC(res, res.length);
         }
         boolean modBusError = CRC16.isExceptionResponse(res);
 
@@ -151,7 +148,7 @@ public class ModbusService {
                 res.length
         );
 
-        if (bytesRead < 5) {
+        if (res.length < 5) {
             throw new RuntimeException(
                     "Resposta Modbus inválida"
             );
@@ -159,7 +156,7 @@ public class ModbusService {
 
         boolean crcError = !CRC16.validateCRC(
                 res,
-                bytesRead
+                res.length
         );
 
         boolean modBusError = CRC16.isExceptionResponse(

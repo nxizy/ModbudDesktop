@@ -1,4 +1,4 @@
-package org.example.modbuddesktopproject.models;
+package org.example.modbuddesktopproject.models.ReadCoils;
 
 import lombok.*;
 

@@ -2,15 +2,20 @@ package org.example.modbuddesktopproject.controller;
 
 import com.fazecast.jSerialComm.SerialPort;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.stage.Stage;
+import org.example.modbuddesktopproject.HelloApplication;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
 import org.example.modbuddesktopproject.Services.ModbusService;
 import org.example.modbuddesktopproject.Services.SerialService;
-import org.example.modbuddesktopproject.models.ModbusRequestDTO;
-import org.example.modbuddesktopproject.models.ModbusResponseDTO;
-import org.example.modbuddesktopproject.models.ReadCoilsRequestDTO;
-import org.example.modbuddesktopproject.models.ReadCoilsResponseDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.*;
+import org.example.modbuddesktopproject.models.ReadCoils.ReadCoilsRequestDTO;
+import org.example.modbuddesktopproject.models.ReadCoils.ReadCoilsResponseDTO;
 
 import java.util.function.UnaryOperator;
 
@@ -31,6 +36,23 @@ public class ReadCoilsController {
     private int slaveId;
     private int bitQuantity;
     private int address;
+
+    @FXML
+    public void irParaMain(ActionEvent event) {
+        try{
+            Stage janela = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+            janela.close();
+
+            Parent root = FXMLLoader.load(HelloApplication.class.getResource("Main.fxml"));
+
+            Stage novaJanela = new Stage();
+            novaJanela.setScene(new Scene(root));
+            novaJanela.setTitle("Modbud - A Modbus Communication Project!");
+            novaJanela.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public void initialize(){
         btnRefreshPorts.setOnAction(e -> loadPorts());

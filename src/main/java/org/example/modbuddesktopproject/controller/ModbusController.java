@@ -7,8 +7,10 @@ import javafx.scene.control.*;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
 import org.example.modbuddesktopproject.Services.ModbusService;
 import org.example.modbuddesktopproject.Services.SerialService;
-import org.example.modbuddesktopproject.models.ModbusRequestDTO;
-import org.example.modbuddesktopproject.models.ModbusResponseDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRequestDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusResponseDTO;
+import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRequestDTO;
+import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCResponseDTO;
 
 import java.util.function.UnaryOperator;
 
@@ -117,23 +119,15 @@ public class ModbusController {
         Task<ModbusResponseDTO> task =
                 new Task<>() {
                     @Override
-                    protected ModbusResponseDTO call()
-                            throws Exception {
-
-                        return ModbusService
-                                .readHoldingRegisters(
-                                        request,
-                                        selectedPort
-                                );
+                    protected ModbusResponseDTO call() throws Exception {
+                        return ModbusService.readHoldingRegisters(request, selectedPort);
                     }
                 };
 
         task.setOnSucceeded(event -> {
-
             loading.close();
 
-            ModbusResponseDTO res =
-                    task.getValue();
+            ModbusResponseDTO res = task.getValue();
 
             txtASentData.setText(ModbusResponse.printFrame(res.getSentBytes(), res.getSentBytes().length));
             txtAReceivedData.setText(ModbusResponse.printFrame(res.getReceivedBytes(), res.getReceivedBytes().length));

@@ -1,4 +1,4 @@
-package org.example.modbuddesktopproject.models;
+package org.example.modbuddesktopproject.models.ReadHoldingRegisters;
 
 import lombok.*;
 
@@ -7,6 +7,7 @@ import lombok.*;
 @Builder
 public class ModbusResponseDTO {
     private int slaveId;
+    private int functionCode;
     private int address;
     private int sentByteQuantity;
     private int value;

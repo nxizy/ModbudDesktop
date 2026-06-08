@@ -1,14 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="CONTROLLER_NAME"
-            prefHeight="400.0" prefWidth="600.0">
-
+<AnchorPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.modbuddesktopproject.controller.ModbusWMCController">
+   <children>
+      <Text layoutX="324.0" layoutY="109.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Função Write Multiple Coils" wrappingWidth="369.336669921875">
+         <font>
+            <Font name="System Bold" size="28.0" />
+         </font>
+      </Text>
+      <Button layoutX="61.0" layoutY="82.0" mnemonicParsing="false" prefHeight="44.0" prefWidth="192.0" text="Voltar para escolha de função" />
+      <Label layoutX="140.0" layoutY="224.0" prefHeight="27.0" prefWidth="110.0" text="Id do Escravo">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <TextField fx:id="inputSlaveId" layoutX="140.0" layoutY="255.0" onAction="#setSlaveId" onKeyTyped="#setSlaveId" />
+      <TextField fx:id="inputAddress" layoutX="347.0" layoutY="255.0" onAction="#setAddress" onKeyTyped="#setAddress" />
+      <Label layoutX="347.0" layoutY="225.0" prefHeight="27.0" prefWidth="79.0" text="Endereço">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label layoutX="549.0" layoutY="225.0" prefHeight="27.0" prefWidth="173.0" text="Quantidade de bits">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <TextField fx:id="inputBitQuantity" layoutX="549.0" layoutY="255.0" onAction="#setBitQuantity" onKeyTyped="#setBitQuantity" prefHeight="25.0" prefWidth="173.0" />
+      <Label layoutX="140.0" layoutY="354.0" text="Porta COM">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <ComboBox fx:id="comboPorts" layoutX="140.0" layoutY="381.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="321.0" />
+      <Button fx:id="btnRefreshPorts" layoutX="469.0" layoutY="382.0" mnemonicParsing="false" text="Atualizar" />
+      <Button fx:id="btnGenerateCoils" layoutX="556.0" layoutY="288.0" mnemonicParsing="false" onAction="#generateCoils" prefHeight="27.0" prefWidth="158.0" text="Gerar Bobinas" />
+      <GridPane fx:id="gridCoils" layoutX="140.0" layoutY="440.0" prefHeight="68.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints fillHeight="false" maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="SOMETIMES" />
+          <RowConstraints fillHeight="false" maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="SOMETIMES" />
+          <RowConstraints fillHeight="false" maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+      </GridPane>
+      <TextArea fx:id="txtASentData" editable="false" layoutX="801.0" layoutY="68.0" prefHeight="102.0" prefWidth="406.0" />
+      <TextArea fx:id="txtAReceivedData" editable="false" layoutX="801.0" layoutY="213.0" prefHeight="102.0" prefWidth="406.0" />
+      <TextArea fx:id="txtAStatus" editable="false" layoutX="801.0" layoutY="358.0" prefHeight="50.0" prefWidth="406.0" />
+      <Label layoutX="801.0" layoutY="330.0" prefHeight="27.0" prefWidth="79.0" text="Resposta">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label layoutX="801.0" layoutY="186.0" prefHeight="27.0" prefWidth="150.0" text="Dados Recebidos">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label layoutX="801.0" layoutY="40.0" prefHeight="27.0" prefWidth="150.0" text="Dados Enviados">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Button fx:id="btnEnviar" layoutX="583.0" layoutY="376.0" mnemonicParsing="false" onAction="#sendModbusWMCRequest" prefHeight="37.0" prefWidth="139.0" text="Enviar" />
+   </children>
 </AnchorPane>

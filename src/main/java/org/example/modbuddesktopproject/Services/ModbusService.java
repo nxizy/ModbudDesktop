@@ -78,18 +78,26 @@ public class ModbusService {
                 res,
                 res.length
         );
+        boolean exceptionResponse = CRC16.isExceptionResponse(res);
+
         boolean crcError;
-        if(bytesRead < 8){
-            crcError = true;
+
+        if (exceptionResponse) {
+            crcError = !CRC16.validateCRC(res, 5);
         } else {
             crcError = !CRC16.validateCRC(res, bytesRead);
         }
-        boolean modBusError = bytesRead != 8
-                        || CRC16.isExceptionResponse(res);
-        boolean addressError;
-        addressError = rebuildBytes(res[2], res[3]) != request.getAddress();
-        boolean quantityError;
-        quantityError = rebuildBytes(res[4], res[5]) != request.getQuantity();
+        boolean modBusError = CRC16.isExceptionResponse(res);
+
+        boolean addressError = false;
+        boolean quantityError = false;
+        if (!modBusError && bytesRead >= 8) {
+            addressError =
+                    rebuildBytes(res[2], res[3]) != request.getAddress();
+
+            quantityError =
+                    rebuildBytes(res[4], res[5]) != request.getQuantity();
+        }
         return ModbusWMCResponseDTO.builder()
                 .slaveId(request.getSlaveId())
                 .functionCode(functionCode)

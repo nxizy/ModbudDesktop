@@ -4,12 +4,15 @@ import com.fazecast.jSerialComm.SerialPort;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
 import org.example.modbuddesktopproject.Services.ModbusService;
 import org.example.modbuddesktopproject.Services.SerialService;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRequestDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCResponseDTO;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 public class ModbusWMCController {
@@ -20,14 +23,15 @@ public class ModbusWMCController {
     @FXML private TextField inputSlaveId;
     @FXML private TextField inputAddress;
     @FXML private TextField inputBitQuantity;
-    @FXML private TextField inputCoils;
     @FXML private TextArea txtASentData;
     @FXML private TextArea txtAReceivedData;
     @FXML private TextArea txtAStatus;
+    @FXML private GridPane gridCoils;
     private SerialPort selectedPort;
     private int slaveId;
     private int bitQuantity;
     private int address;
+    private final List<CheckBox> coilCheckBoxes = new ArrayList<>();
 
     public void initialize(){
         btnRefreshPorts.setOnAction(e -> loadPorts());
@@ -52,14 +56,38 @@ public class ModbusWMCController {
 
             return null;
         };
+        // Filtro para bitQuantity
+        UnaryOperator<TextFormatter.Change> bitQuantityFilter = change -> {
+            String newText = change.getControlNewText();
+            if (newText.matches("\\d*")) {
+                return change; // Accept change
+            }
+            return null; // Reject change
+        };
 
         inputSlaveId.setTextFormatter(new TextFormatter<>(slaveFilter));
         inputAddress.setTextFormatter(new TextFormatter<>(enderecoFilter));
-
+        inputBitQuantity.setTextFormatter(new TextFormatter<>(bitQuantityFilter));
     }
 
     public void sendModbusWMCRequest() throws InterruptedException{
-
+        boolean[] coils = new boolean[coilCheckBoxes.size()];
+        for (int i = 0; i < coilCheckBoxes.size(); i++) {
+            coils[i] = coilCheckBoxes.get(i).isSelected();
+        }
+        ModbusWMCRequestDTO req = ModbusWMCRequestDTO.builder()
+                .slaveId(slaveId)
+                .address(address)
+                .quantity(bitQuantity)
+                .coils(coils)
+                .build();
+        Alert loading = new Alert(Alert.AlertType.INFORMATION);
+        loading.setTitle("Carregando");
+        loading.setHeaderText(null);
+        loading.setContentText("Escrevendo nas bobinas...");
+        loading.show();
+        Task<ModbusWMCResponseDTO> task = getModbusWMCResponseDTOTask(req, loading);
+        new Thread(task).start();
     }
 
     private Task<ModbusWMCResponseDTO> getModbusWMCResponseDTOTask(ModbusWMCRequestDTO request, Alert loading) {
@@ -120,14 +148,32 @@ public class ModbusWMCController {
         }
     }
 
+    public void generateCoils(){
+        coilCheckBoxes.clear();
+        gridCoils.getRowConstraints().clear();
+        gridCoils.getColumnConstraints().clear();
+        gridCoils.getChildren().clear();
+        gridCoils.setVgap(3);
+        gridCoils.setHgap(6);
+        for (int i = 0; i < bitQuantity; i++) {
+            CheckBox checkBox = new CheckBox();
+            coilCheckBoxes.add(checkBox);
+            int row = i % 8;
+            int col = i / 8;
+            HBox coilHBox = new HBox(
+                    6,
+                    new Label("Bobina " + i),
+                    checkBox
+            );
+            coilHBox.setMinHeight(30);
+            gridCoils.add(coilHBox, col, row);
+        }
+    }
+
 
     public void setBitQuantity(){
         String text = inputBitQuantity.getText();
         bitQuantity = Integer.parseInt(text);
-        if(bitQuantity > 15) {
-            showError("A Quantidade de Bits deve ser menor que 16.");
-            return;
-        }
     }
 
     public void setAddress(){

@@ -10,26 +10,22 @@ import org.example.modbuddesktopproject.models.ReadCoils.ReadCoilsResponseDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRequestDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCResponseDTO;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class ModbusService {
 
     public static ModbusResponseDTO readHoldingRegisters(ModbusRequestDTO request, SerialPort port) throws InterruptedException {
+        if (!port.isOpen()) {
+            throw new IllegalStateException(
+                    "Porta serial não está aberta"
+            );
+        }
         byte[] req = ModbusFrame.readHoldingRegisters(request.getSlaveId(), request.getAddress(), request.getQuantity());
         byte functionCode = req[1];
-        port.setComPortParameters(
-                9600,
-                8,
-                SerialPort.ONE_STOP_BIT,
-                SerialPort.NO_PARITY
-        );
-        SerialService.openPort(port);
-        port.setComPortTimeouts(
-                SerialPort.TIMEOUT_READ_BLOCKING,
-                3000,
-                0
-        );
+        port.flushIOBuffers();
         int sentBytes = port.writeBytes(req, req.length);
-
-        Thread.sleep(500);
         byte[] res = new byte[8];
         int bytesRead = port.readBytes(
                 res,
@@ -58,22 +54,15 @@ public class ModbusService {
     }
 
     public static ModbusWMCResponseDTO writeMultipleCoils(ModbusWMCRequestDTO request, SerialPort port) throws InterruptedException{
+        if (!port.isOpen()) {
+            throw new IllegalStateException(
+                    "Porta serial não está aberta"
+            );
+        }
         byte[] req = ModbusFrame.writeMultipleCoils(request.getSlaveId(), request.getAddress(), request.getQuantity(), request.getCoils());
         byte functionCode = req[1];
-        port.setComPortParameters(
-                9600,
-                8,
-                SerialPort.ONE_STOP_BIT,
-                SerialPort.NO_PARITY
-        );
-        SerialService.openPort(port);
-        port.setComPortTimeouts(
-                SerialPort.TIMEOUT_READ_BLOCKING,
-                3000,
-                0
-        );
+        port.flushIOBuffers();
         int sentBytes = port.writeBytes(req, req.length);
-        Thread.sleep(500);
         byte[] res = new byte[8];
         int bytesRead = port.readBytes(
                 res,
@@ -112,31 +101,16 @@ public class ModbusService {
                 .build();
     }
 
-    private static int rebuildBytes(byte high, byte low) {
-        return ((high & 0xFF) << 8) | (low & 0xFF);
-    }
-
     public static ReadCoilsResponseDTO readCoils(ReadCoilsRequestDTO request, SerialPort port) throws InterruptedException {
+        if (!port.isOpen()) {
+            throw new IllegalStateException(
+                    "Porta serial não está aberta"
+            );
+        }
         byte[] req = ModbusFrame.readCoils(request.getSlaveId(), request.getAddress(), request.getQuantity());
 
-        port.setComPortParameters(
-                9600,
-                8,
-                SerialPort.ONE_STOP_BIT,
-                SerialPort.NO_PARITY
-        );
-
-        SerialService.openPort(port);
-
-        port.setComPortTimeouts(
-                SerialPort.TIMEOUT_READ_BLOCKING,
-                3000,
-                0
-        );
-
+        port.flushIOBuffers();
         int sentBytes = port.writeBytes(req, req.length);
-
-        Thread.sleep(500);
 
         // Calcula quantos bytes serão retornados para os coils
         int dataBytes = (request.getQuantity() + 7) / 8;
@@ -147,6 +121,12 @@ public class ModbusService {
                 res,
                 res.length
         );
+
+        if(bytesRead <= 0){
+            throw new RuntimeException(
+                    "Nenhuma resposta recebida do escravo"
+            );
+        }
 
         if (res.length < 5) {
             throw new RuntimeException(
@@ -179,7 +159,6 @@ public class ModbusService {
                     byteCount
             );
         }
-
         return ReadCoilsResponseDTO.builder()
                 .slaveId(request.getSlaveId())
                 .address(request.getAddress())
@@ -190,5 +169,31 @@ public class ModbusService {
                 .hasCrcError(crcError)
                 .hasModbusError(modBusError)
                 .build();
+    }
+
+    public static List<Boolean> extractCoils(byte[] coilBytes, int quantity) {
+        List<Boolean> coils = new ArrayList<>();
+
+        if (coilBytes == null || coilBytes.length == 0) {
+            return coils;
+        }
+
+        for (int i = 0; i < quantity; i++) {
+
+            int byteIndex = i / 8;
+            int bitIndex = i % 8;
+
+            boolean value =
+                    ((coilBytes[byteIndex] & 0xFF) & (1 << bitIndex))
+                            != 0;
+
+            coils.add(value);
+        }
+
+        return coils;
+    }
+
+    private static int rebuildBytes(byte high, byte low) {
+        return ((high & 0xFF) << 8) | (low & 0xFF);
     }
 }

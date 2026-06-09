@@ -7,14 +7,15 @@
 
 <AnchorPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.modbuddesktopproject.controller.MainController">
    <children>
-      <Label layoutX="508.0" layoutY="185.0" prefHeight="34.0" prefWidth="265.0" text="Bem vindo ao Modbud!">
+      <Label layoutX="512.0" layoutY="182.0" prefHeight="34.0" prefWidth="258.0" text="Bem vindo ao Modbud!">
          <font>
             <Font name="System Bold" size="23.0" />
          </font>
       </Label>
-      <Label layoutX="557.0" layoutY="267.0" text="Selecione a operação desejada:" />
-      <Button layoutX="592.0" layoutY="319.0" mnemonicParsing="false" onAction="#irParaReadCoils" text="01 - Read Coils" />
-      <Button layoutX="568.0" layoutY="410.0" mnemonicParsing="false" onAction="#irParaWMCWindow" text="15 - Write Multiple Coils" />
-      <Button layoutX="559.0" layoutY="366.0" mnemonicParsing="false" onAction="#irParaHRWindow" text="03 - Read Holding Registers" />
+      <Label layoutX="558.0" layoutY="268.0" text="Selecione a operação desejada:" />
+      <Button layoutX="593.0" layoutY="320.0" mnemonicParsing="false" onAction="#irParaReadCoils" text="01 - Read Coils" />
+      <Button layoutX="569.0" layoutY="411.0" mnemonicParsing="false" onAction="#irParaWMCWindow" text="15 - Write Multiple Coils" />
+      <Button layoutX="560.0" layoutY="367.0" mnemonicParsing="false" onAction="#irParaHRWindow" text="03 - Read Holding Registers" />
+      <Button layoutX="607.0" layoutY="510.0" mnemonicParsing="false" onAction="#irParaMonitorItemWindow" text="Monitorar" />
    </children>
 </AnchorPane>

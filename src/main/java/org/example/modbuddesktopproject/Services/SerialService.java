@@ -27,4 +27,30 @@ public class SerialService {
         port.openPort();
         return port.isOpen();
     }
+
+    public static void connect(SerialPort port) {
+        port.setComPortParameters(
+                9600,
+                8,
+                SerialPort.ONE_STOP_BIT,
+                SerialPort.NO_PARITY
+        );
+        port.setComPortTimeouts(
+                SerialPort.TIMEOUT_READ_BLOCKING,
+                400,
+                0
+        );
+        port.openPort();
+        boolean opened = port.isOpen();
+        if (!opened) {
+            throw new RuntimeException(
+                    "Não foi possível abrir a porta " +
+                            port.getSystemPortName()
+            );
+        }
+    }
+
+    public static void disconnect(SerialPort port) {
+        port.closePort();
+    }
 }

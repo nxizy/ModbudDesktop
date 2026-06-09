@@ -60,4 +60,21 @@ public class MainController {
         }
     }
 
+    @FXML
+    public void irParaMonitorItemWindow(ActionEvent event) {
+        try{
+            Stage janela = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+            janela.close();
+
+            Parent root = FXMLLoader.load(HelloApplication.class.getResource("ItemMonitor.fxml"));
+
+            Stage novaJanela = new Stage();
+            novaJanela.setScene(new Scene(root));
+            novaJanela.setTitle("Modbud - A Modbus Communication Project!");
+            novaJanela.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

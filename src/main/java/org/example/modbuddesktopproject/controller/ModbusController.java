@@ -44,6 +44,7 @@ public class ModbusController {
 
             Parent root = FXMLLoader.load(HelloApplication.class.getResource("Main.fxml"));
 
+            SerialService.disconnect(selectedPort);
             Stage novaJanela = new Stage();
             novaJanela.setScene(new Scene(root));
             novaJanela.setTitle("Modbud - A Modbus Communication Project!");
@@ -82,9 +83,14 @@ public class ModbusController {
 
     }
 
-    public void setSelectedPort(){
+    public void setSelectedPort() {
+        if (selectedPort != null && selectedPort.isOpen()) {
+            SerialService.disconnect(selectedPort);
+        }
         selectedPort = serialService.getPort(comboPorts.getValue());
-        System.out.println(selectedPort);
+
+        SerialService.connect(selectedPort);
+
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Porta selecionada");
         alert.setHeaderText(null);
@@ -146,6 +152,7 @@ public class ModbusController {
                 };
 
         task.setOnSucceeded(event -> {
+
             loading.close();
 
             ModbusResponseDTO res = task.getValue();

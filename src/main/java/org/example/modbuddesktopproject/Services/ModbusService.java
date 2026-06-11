@@ -178,6 +178,7 @@ public class ModbusService {
             return coils;
         }
 
+
         for (int i = 0; i < quantity; i++) {
 
             int byteIndex = i / 8;

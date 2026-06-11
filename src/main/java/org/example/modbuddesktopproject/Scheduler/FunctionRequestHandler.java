@@ -1,6 +1,7 @@
 package org.example.modbuddesktopproject.Scheduler;
 
 import com.fazecast.jSerialComm.SerialPort;
+import org.example.modbuddesktopproject.Modbus.ModbusResponse;
 import org.example.modbuddesktopproject.Scheduler.models.MonitorItem;
 import org.example.modbuddesktopproject.Scheduler.models.MonitorResponse;
 import org.example.modbuddesktopproject.Services.ModbusService;
@@ -10,88 +11,123 @@ import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusReques
 import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusResponseDTO;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class FunctionRequestHandler {
+    private volatile SerialPort currentPort;
+    private final AtomicLong idGenerator = new AtomicLong(1);
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private ScheduledFuture<?> monitoringTask;
+    private final Map<Long, ScheduledFuture<?>> tasks = new ConcurrentHashMap<>();
+    private final int delayAntiOverlap = 50;
 
-    public List<MonitorResponse<?>> functionHandler(List<MonitorItem> monitorItemsReq, SerialPort port) throws InterruptedException {
-        List<MonitorResponse<?>> responses = new ArrayList<>();
-        for(MonitorItem monitorItem: monitorItemsReq){
-            switch(monitorItem.getFunctionCode()){
-                case 1:
-                    ReadCoilsRequestDTO coilsRequestDTO = ReadCoilsRequestDTO.builder()
-                            .slaveId(monitorItem.getSlaveId())
-                            .address(monitorItem.getAddress())
-                            .quantity(monitorItem.getQuantity())
-                            .build();
-                    ReadCoilsResponseDTO coilsResponseDTO = ModbusService.readCoils(coilsRequestDTO, port);
-                    System.out.println("Bytes recebidos:" + coilsResponseDTO.getCoilBytes().length);
-                    System.out.println(
-                            "quantity = "
-                                    + coilsResponseDTO.getQuantity()
-                    );
-                    List<Boolean> coilsList = ModbusService.extractCoils(
-                            coilsResponseDTO.getCoilBytes(),
-                            coilsResponseDTO.getQuantity()
-                    );
-                    MonitorResponse<Boolean> coilsResponse = MonitorResponse.<Boolean>builder()
-                            .monitorItem(monitorItem)
-                            .values(coilsList)
-                            .timestamp(LocalDateTime.now())
-                            .build();
-                    responses.add(coilsResponse);
-                    Thread.sleep(50);
-                    break;
-
-                case 3:
-                    ModbusRequestDTO hrRequestDTO = ModbusRequestDTO.builder()
-                            .slaveId(monitorItem.getSlaveId())
-                            .address(monitorItem.getAddress())
-                            .quantity(monitorItem.getQuantity())
-                            .build();
-                    ModbusResponseDTO hrResponseDTO = ModbusService.readHoldingRegisters(hrRequestDTO, port);
-                    MonitorResponse<Integer> holdingResponse = MonitorResponse.<Integer>builder()
-                            .monitorItem(monitorItem)
-                            .values(List.of(hrResponseDTO.getValue()))
-                            .timestamp(LocalDateTime.now())
-                            .build();
-                    responses.add(holdingResponse);
-                    Thread.sleep(50);
-                    break;
-            }
+    public MonitorResponse<?> executeItem(MonitorItem monitorItem, SerialPort port) throws InterruptedException {
+        switch(monitorItem.getFunctionCode()){
+            case 1:
+                ReadCoilsRequestDTO coilsRequestDTO = ReadCoilsRequestDTO.builder()
+                        .slaveId(monitorItem.getSlaveId())
+                        .address(monitorItem.getAddress())
+                        .quantity(monitorItem.getQuantity())
+                        .build();
+                //Para não dar overlap?
+                Thread.sleep(delayAntiOverlap);
+                ReadCoilsResponseDTO coilsResponseDTO = ModbusService.readCoils(coilsRequestDTO, port);
+                List<Boolean> coilsList = ModbusService.extractCoils(
+                        coilsResponseDTO.getCoilBytes(),
+                        coilsResponseDTO.getQuantity()
+                );
+                return MonitorResponse.<Boolean>builder()
+                        .monitorItem(monitorItem)
+                        .values(coilsList)
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            case 3:
+               ModbusRequestDTO hrRequestDTO = ModbusRequestDTO.builder()
+                       .slaveId(monitorItem.getSlaveId())
+                       .address(monitorItem.getAddress())
+                       .quantity(monitorItem.getQuantity())
+                       .build();
+                //Para não dar overlap?
+                Thread.sleep(delayAntiOverlap);
+               ModbusResponseDTO hrResponseDTO = ModbusService.readHoldingRegisters(hrRequestDTO, port);
+               return MonitorResponse.<Integer>builder()
+                       .monitorItem(monitorItem)
+                       .values(List.of(hrResponseDTO.getValue()))
+                       .timestamp(LocalDateTime.now())
+                       .build();
+            default:
+                throw new IllegalArgumentException();
         }
-        return responses;
     }
 
-    public void startMonitoring(
-            List<MonitorItem> monitorItems,
-            SerialPort port,
-            int timeDelayInMS,
-            Consumer<List<MonitorResponse<?>>> onUpdate
+    public void removeMonitorItem(
+            MonitorItem item
     ) {
-        System.out.println("Monitoramento iniciado");
-        monitoringTask = executor.scheduleWithFixedDelay(() -> {
+        ScheduledFuture<?> future = tasks.remove(item.getId());
+        if (future != null) {
+            future.cancel(true);
+        }
+    }
+
+    public void addMonitorItem(
+            MonitorItem monitorItem,
+            Consumer<MonitorResponse<?>> onUpdate
+    ) {
+        ScheduledFuture<?> future = executor.scheduleWithFixedDelay(() -> {
             try {
-                List<MonitorResponse<?>> responses = functionHandler(monitorItems, port);
-                System.out.println(responses);
-                onUpdate.accept(responses);
+                SerialPort port = currentPort;
+                if(port == null) {
+                    return;
+                }
+                MonitorResponse<?> response = executeItem(monitorItem, port);
+                System.out.println("Resposta vindo do schedule addMonitorItem" +response);
+                onUpdate.accept(response);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 0, timeDelayInMS, TimeUnit.MILLISECONDS);
+        }, 0, monitorItem.getMsDelay() - delayAntiOverlap, TimeUnit.MILLISECONDS);
+//        Long newMonitorItemId = idGenerator.getAndIncrement();
+//        monitorItem.setId(newMonitorItemId);
+        tasks.put(monitorItem.getId(), future);
     }
 
-    public void stopMonitoring(){
-        if (monitoringTask != null) {
-            monitoringTask.cancel(true);
-        }
+    public void updateMonitorItem(
+            MonitorItem monitorItemRequest,
+            MonitorItem actualItem,
+            Consumer<MonitorResponse<?>> onUpdate
+    ){
+        removeMonitorItem(actualItem);
+        MonitorItem newMonitorItem = MonitorItem.builder()
+                .id(actualItem.getId())
+                .name(monitorItemRequest.getName())
+                .slaveId(monitorItemRequest.getSlaveId())
+                .functionCode(monitorItemRequest.getFunctionCode())
+                .address(monitorItemRequest.getAddress())
+                .quantity(monitorItemRequest.getQuantity())
+                .msDelay(monitorItemRequest.getMsDelay())
+                .build();
+        addMonitorItem(newMonitorItem, onUpdate);
+    }
+
+    public void stopAll() {
+        tasks.values().forEach(
+                future -> future.cancel(true)
+        );
+        tasks.clear();
+    }
+
+    public void shutdown(){
+        stopAll();
+        executor.shutdown();
+    }
+
+    public void setCurrentPort(
+            SerialPort port
+    ) {
+        this.currentPort = port;
     }
 }

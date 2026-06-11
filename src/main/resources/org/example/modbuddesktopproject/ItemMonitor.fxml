@@ -1,74 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.modbuddesktopproject.controller.ItemMonitorController">
+<AnchorPane prefHeight="720.0" prefWidth="1749.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.modbuddesktopproject.controller.ItemMonitorController">
    <children>
-      <Label layoutX="840.0" layoutY="56.0" text="Porta COM">
+      <Label layoutX="1005.0" layoutY="68.0" text="Porta COM">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <ComboBox fx:id="comboPorts" layoutX="840.0" layoutY="83.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="321.0" />
-      <Button fx:id="btnRefreshPorts" layoutX="1169.0" layoutY="84.0" mnemonicParsing="false" text="Atualizar" />
+      <ComboBox fx:id="comboPorts" layoutX="1005.0" layoutY="95.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="321.0" />
+      <Button fx:id="btnRefreshPorts" layoutX="1334.0" layoutY="96.0" mnemonicParsing="false" text="Atualizar" />
       <Button layoutX="79.0" layoutY="82.0" mnemonicParsing="false" onAction="#irParaMain" prefHeight="35.0" prefWidth="159.0" text="Voltar para Menu Principal" />
-      <Label layoutX="433.0" layoutY="80.0" text="Monitor de Itens">
+      <Label layoutX="598.0" layoutY="92.0" text="Monitor de Itens">
          <font>
             <Font name="System Bold" size="28.0" />
          </font>
       </Label>
-      <Label layoutX="335.0" layoutY="258.0" prefHeight="27.0" prefWidth="110.0" text="Id do Escravo">
+      <Label layoutX="500.0" layoutY="270.0" prefHeight="27.0" prefWidth="110.0" text="Id do Escravo">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <TextField fx:id="inputSlaveId" layoutX="335.0" layoutY="287.0" onAction="#setSlaveId" onKeyTyped="#setSlaveId" />
-      <TextField fx:id="inputAddress" layoutX="661.0" layoutY="287.0" onAction="#setAddress" onKeyTyped="#setAddress" />
-      <Label layoutX="661.0" layoutY="259.0" prefHeight="27.0" prefWidth="79.0" text="Endereço">
+      <TextField fx:id="inputSlaveId" layoutX="500.0" layoutY="299.0" onAction="#setSlaveId" onKeyTyped="#setSlaveId" />
+      <TextField fx:id="inputAddress" layoutX="826.0" layoutY="299.0" onAction="#setAddress" onKeyTyped="#setAddress" />
+      <Label layoutX="826.0" layoutY="271.0" prefHeight="27.0" prefWidth="79.0" text="Endereço">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <Label layoutX="814.0" layoutY="259.0" prefHeight="27.0" prefWidth="173.0" text="Quantidade de bits">
+      <Label layoutX="979.0" layoutY="271.0" prefHeight="27.0" prefWidth="173.0" text="Quantidade de bits">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <TextField fx:id="inputBitQuantity" layoutX="814.0" layoutY="287.0" onAction="#setBitQuantity" onKeyTyped="#setBitQuantity" prefHeight="25.0" prefWidth="173.0" />
-      <Label layoutX="486.0" layoutY="259.0" text="Função">
+      <TextField fx:id="inputBitQuantity" layoutX="979.0" layoutY="299.0" onAction="#setBitQuantity" onKeyTyped="#setBitQuantity" prefHeight="25.0" prefWidth="173.0" />
+      <Label layoutX="651.0" layoutY="271.0" text="Função">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <ComboBox fx:id="comboFunctions" layoutX="486.0" layoutY="287.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="173.0" />
-      <Label layoutX="195.0" layoutY="395.0" prefHeight="27.0" prefWidth="173.0" text="Resposta">
+      <ComboBox fx:id="comboFunctions" layoutX="651.0" layoutY="299.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="173.0" />
+      <Label layoutX="824.0" layoutY="394.0" prefHeight="27.0" prefWidth="173.0" text="Resposta">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <TableView fx:id="tblResponse" layoutX="195.0" layoutY="430.0" prefHeight="200.0" prefWidth="890.0">
-        <columns>
-          <TableColumn fx:id="nameColumn" prefWidth="145.0" text="Nome" />
+      <TableView fx:id="tblResponse" layoutX="823.0" layoutY="428.0" prefHeight="200.0" prefWidth="890.0">
+         <columns>
+            <TableColumn fx:id="nameColumn" prefWidth="145.0" text="Nome" />
             <TableColumn fx:id="slaveColumn" text="Escravo" />
-          <TableColumn fx:id="functionColumn" prefWidth="107.0" text="Função" />
+            <TableColumn fx:id="functionColumn" prefWidth="107.0" text="Função" />
             <TableColumn fx:id="addressColumn" prefWidth="113.0" text="Endereço" />
             <TableColumn fx:id="valueColumn" prefWidth="306.0" text="Valor" />
             <TableColumn fx:id="timestampColumn" prefWidth="138.0" text="Horário" />
-        </columns>
+         </columns>
       </TableView>
-      <Button fx:id="btnMonitor" layoutX="999.0" layoutY="285.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="126.0" text="Monitorar" />
-      <Label layoutX="184.0" layoutY="258.0" prefHeight="27.0" prefWidth="110.0" text="Nome">
+      <Button fx:id="btnMonitor" layoutX="1347.0" layoutY="300.0" mnemonicParsing="false" onAction="#sendModbusMonitoring" prefHeight="25.0" prefWidth="126.0" text="Monitorar" />
+      <Label layoutX="349.0" layoutY="270.0" prefHeight="27.0" prefWidth="110.0" text="Nome">
          <font>
             <Font size="18.0" />
          </font>
       </Label>
-      <TextField fx:id="inputMonitorName" layoutX="184.0" layoutY="287.0" onAction="#setName" onKeyTyped="#setName" />
+      <TextField fx:id="inputMonitorName" layoutX="349.0" layoutY="299.0" onAction="#setName" onKeyTyped="#setName" />
+      <Label layoutX="66.0" layoutY="394.0" prefHeight="27.0" prefWidth="173.0" text="Requisições">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Button fx:id="btnAddRequest" layoutX="651.0" layoutY="395.0" mnemonicParsing="false" onAction="#addRequest" text="Add Requisição" />
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" layoutX="66.0" layoutY="428.0" prefHeight="216.0" prefWidth="690.0" style="-fx-background-color: lightgray;" vbarPolicy="AS_NEEDED">
+         <content>
+            <VBox fx:id="requestsContainer" fillWidth="true" prefHeight="200.0" prefWidth="692.0" spacing="8">
+               <children>
+                  <HBox alignment="CENTER_LEFT" nodeOrientation="LEFT_TO_RIGHT" prefHeight="58.0" prefWidth="560.0" spacing="12.0">
+                     <children>
+                        <Label text="Nome | Id Escravo | Endereço | Quantidade de bits | Tempo(ms)">
+                           <font>
+                              <Font name="System Bold" size="20.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                     <padding>
+                        <Insets left="12.0" right="12.0" top="6.0" />
+                     </padding>
+                  </HBox>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+      <Label layoutX="1162.0" layoutY="271.0" prefHeight="27.0" prefWidth="173.0" text="Delay de Scan (MS)">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <TextField fx:id="inputScanDelay" layoutX="1162.0" layoutY="299.0" onAction="#setScanDelay" onKeyTyped="#setScanDelay" prefHeight="25.0" prefWidth="173.0" />
    </children>
 </AnchorPane>

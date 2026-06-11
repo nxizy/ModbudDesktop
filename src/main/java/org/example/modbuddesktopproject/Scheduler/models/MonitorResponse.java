@@ -11,6 +11,4 @@ public class MonitorResponse<T> {
     private MonitorItem monitorItem;
     private List<T> values;
     private LocalDateTime timestamp;
-
-
 }

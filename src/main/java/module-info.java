@@ -6,6 +6,7 @@ module org.example.modbuddesktopproject {
     requires com.fazecast.jSerialComm;
     requires static lombok;
     requires java.desktop;
+    requires java.management;
 
     opens org.example.modbuddesktopproject to javafx.fxml;
     opens org.example.modbuddesktopproject.controller to javafx.fxml;

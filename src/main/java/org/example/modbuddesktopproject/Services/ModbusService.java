@@ -10,11 +10,15 @@ import org.example.modbuddesktopproject.models.ReadCoils.ReadCoilsResponseDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRequestDTO;
 import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCResponseDTO;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class ModbusService {
+    private static final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    private static final Object lock = new Object();
 
     public static ModbusResponseDTO readHoldingRegisters(ModbusRequestDTO request, SerialPort port) throws InterruptedException {
         if (!port.isOpen()) {
@@ -101,74 +105,107 @@ public class ModbusService {
                 .build();
     }
 
-    public static ReadCoilsResponseDTO readCoils(ReadCoilsRequestDTO request, SerialPort port) throws InterruptedException {
+    public static ReadCoilsResponseDTO readCoils(
+            ReadCoilsRequestDTO request,
+            SerialPort port
+    ) throws InterruptedException, IOException {
+
         if (!port.isOpen()) {
-            throw new IllegalStateException(
-                    "Porta serial não está aberta"
-            );
+            throw new IllegalStateException("Porta serial não está aberta");
         }
-        byte[] req = ModbusFrame.readCoils(request.getSlaveId(), request.getAddress(), request.getQuantity());
 
-        port.flushIOBuffers();
-        int sentBytes = port.writeBytes(req, req.length);
-
-        // Calcula quantos bytes serão retornados para os coils
-        int dataBytes = (request.getQuantity() + 7) / 8;
-
-        byte[] res = new byte[5 + dataBytes];
-
-        int bytesRead = port.readBytes(
-                res,
-                res.length
+        // 1. monta requisição
+        byte[] req = ModbusFrame.readCoils(
+                request.getSlaveId(),
+                request.getAddress(),
+                request.getQuantity()
         );
 
-        if(bytesRead <= 0){
-            throw new RuntimeException(
-                    "Nenhuma resposta recebida do escravo"
-            );
+        synchronized (lock) {
+            buffer.reset();
+
+            port.flushIOBuffers();
+            port.writeBytes(req, req.length);
+
+            long start = System.currentTimeMillis();
+
+            byte[] frame = null;
+
+            // 2. loop esperando frame completo
+            while (System.currentTimeMillis() - start < 2000) { // timeout 2s
+
+                Thread.sleep(5);
+
+                int available = port.bytesAvailable();
+                if (available > 0) {
+
+                    byte[] temp = new byte[available];
+                    port.readBytes(temp, temp.length);
+                    buffer.write(temp);
+                }
+
+                byte[] current = buffer.toByteArray();
+
+                frame = tryBuildFrameFC01(current);
+
+                if (frame != null) break;
+            }
+
+            if (frame == null) {
+                throw new RuntimeException("Timeout esperando resposta Modbus");
+            }
+
+            // 3. valida CRC
+            boolean crcError = !CRC16.validateCRC(frame, frame.length);
+            boolean modbusError = CRC16.isExceptionResponse(frame);
+
+            byte[] coilBytes = new byte[0];
+
+            if (!modbusError) {
+                int byteCount = frame[2] & 0xFF;
+
+                coilBytes = new byte[byteCount];
+
+                System.arraycopy(
+                        frame,
+                        3,
+                        coilBytes,
+                        0,
+                        byteCount
+                );
+            }
+
+            System.out.println("REQ: " + Arrays.toString(req));
+            System.out.println("RESP: " + Arrays.toString(frame));
+
+            return ReadCoilsResponseDTO.builder()
+                    .slaveId(request.getSlaveId())
+                    .address(request.getAddress())
+                    .quantity(request.getQuantity())
+                    .coilBytes(coilBytes)
+                    .sentBytes(req)
+                    .receivedBytes(frame)
+                    .hasCrcError(crcError)
+                    .hasModbusError(modbusError)
+                    .build();
+        }
+    }
+
+    private static byte[] tryBuildFrameFC01(byte[] data) {
+
+        // mínimo FC01:
+        // [slave][fc][byteCount][data...][crcLo][crcHi]
+        if (data.length < 5) return null;
+
+        int byteCount = data[2] & 0xFF;
+
+        int expectedSize = 3 + byteCount + 2;
+
+        if (data.length < expectedSize) {
+            return null; // ainda não chegou tudo
         }
 
-        if (res.length < 5) {
-            throw new RuntimeException(
-                    "Resposta Modbus inválida"
-            );
-        }
-
-        boolean crcError = !CRC16.validateCRC(
-                res,
-                res.length
-        );
-
-        boolean modBusError = CRC16.isExceptionResponse(
-                res
-        );
-
-        byte[] coilBytes = new byte[0];
-
-        if (!modBusError) {
-
-            int byteCount = res[2] & 0xFF;
-
-            coilBytes = new byte[byteCount];
-
-            System.arraycopy(
-                    res,
-                    3,
-                    coilBytes,
-                    0,
-                    byteCount
-            );
-        }
-        return ReadCoilsResponseDTO.builder()
-                .slaveId(request.getSlaveId())
-                .address(request.getAddress())
-                .quantity(request.getQuantity())
-                .coilBytes(coilBytes)
-                .sentBytes(req)
-                .receivedBytes(res)
-                .hasCrcError(crcError)
-                .hasModbusError(modBusError)
-                .build();
+        return Arrays.copyOfRange(data, 0, expectedSize);
     }
 
     public static List<Boolean> extractCoils(byte[] coilBytes, int quantity) {

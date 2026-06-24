@@ -10,6 +10,7 @@ import org.example.modbuddesktopproject.models.ReadCoils.ReadCoilsResponseDTO;
 import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRequestDTO;
 import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusResponseDTO;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +26,7 @@ public class FunctionRequestHandler {
     private final Map<Long, ScheduledFuture<?>> tasks = new ConcurrentHashMap<>();
     private final int delayAntiOverlap = 50;
 
-    public MonitorResponse<?> executeItem(MonitorItem monitorItem, SerialPort port) throws InterruptedException {
+    public MonitorResponse<?> executeItem(MonitorItem monitorItem, SerialPort port) throws InterruptedException, IOException {
         switch(monitorItem.getFunctionCode()){
             case 1:
                 ReadCoilsRequestDTO coilsRequestDTO = ReadCoilsRequestDTO.builder()

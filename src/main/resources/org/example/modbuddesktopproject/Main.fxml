@@ -17,5 +17,6 @@
       <Button layoutX="569.0" layoutY="411.0" mnemonicParsing="false" onAction="#irParaWMCWindow" text="15 - Write Multiple Coils" />
       <Button layoutX="560.0" layoutY="367.0" mnemonicParsing="false" onAction="#irParaHRWindow" text="03 - Read Holding Registers" />
       <Button layoutX="607.0" layoutY="510.0" mnemonicParsing="false" onAction="#irParaMonitorItemWindow" text="Monitorar" />
+      <Button fx:id="tcp" layoutX="622.0" layoutY="460.0" mnemonicParsing="false" onAction="#irParaTCP" text="TCP" />
    </children>
 </AnchorPane>

@@ -12,27 +12,32 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.example.modbuddesktopproject.HelloApplication;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
+import org.example.modbuddesktopproject.Services.MasterService;
+import org.example.modbuddesktopproject.Services.MasterTransport;
 import org.example.modbuddesktopproject.Services.ModbusService;
 import org.example.modbuddesktopproject.Services.SerialService;
-import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRequestDTO;
-import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCResponseDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRHRRTUResponseDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRHRTCPResponseDTO;
+import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRTURequestDTO;
+import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCRTUResponseDTO;
+import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCTCPRequestDTO;
+import org.example.modbuddesktopproject.models.WriteMultipleCoils.ModbusWMCTCPResponseDTO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.UnaryOperator;
 
 public class ModbusWMCController {
     private final SerialService serialService = new SerialService();
 
-    @FXML private ComboBox<String> comboPorts;
-    @FXML private Button btnRefreshPorts;
     @FXML private TextField inputSlaveId;
     @FXML private TextField inputAddress;
     @FXML private TextField inputBitQuantity;
-    @FXML private TextArea txtASentData;
     @FXML private TextArea txtAReceivedData;
     @FXML private TextArea txtAStatus;
     @FXML private GridPane gridCoils;
+    @FXML private TextField modeSelected;
     private SerialPort selectedPort;
     private int slaveId;
     private int bitQuantity;
@@ -47,7 +52,6 @@ public class ModbusWMCController {
 
             Parent root = FXMLLoader.load(HelloApplication.class.getResource("Main.fxml"));
 
-            SerialService.disconnect(selectedPort);
             Stage novaJanela = new Stage();
             novaJanela.setScene(new Scene(root));
             novaJanela.setTitle("Modbud - A Modbus Communication Project!");
@@ -58,9 +62,7 @@ public class ModbusWMCController {
     }
 
     public void initialize(){
-        btnRefreshPorts.setOnAction(e -> loadPorts());
-        comboPorts.setOnAction(e -> setSelectedPort());
-        loadPorts();
+        modeSelected.setText("Modo " + AppContext.getInstance().getTransport().whichProtocol() + " selecionado!");
 
         // Filtro para slaveId
         UnaryOperator<TextFormatter.Change> slaveFilter = change -> {
@@ -99,9 +101,18 @@ public class ModbusWMCController {
         for (int i = 0; i < coilCheckBoxes.size(); i++) {
             coils[i] = coilCheckBoxes.get(i).isSelected();
         }
-        ModbusWMCRequestDTO req = ModbusWMCRequestDTO.builder()
+        ModbusWMCRTURequestDTO req = ModbusWMCRTURequestDTO.builder()
                 .slaveId(slaveId)
                 .address(address)
+                .quantity(bitQuantity)
+                .coils(coils)
+                .build();
+
+        int transactionId = ThreadLocalRandom.current().nextInt(0, 65536);
+        ModbusWMCTCPRequestDTO reqTCP = ModbusWMCTCPRequestDTO.builder()
+                .transactionId(transactionId)
+                .unitId(slaveId)
+                .startAddress(address)
                 .quantity(bitQuantity)
                 .coils(coils)
                 .build();
@@ -109,44 +120,72 @@ public class ModbusWMCController {
         loading.setTitle("Carregando");
         loading.setHeaderText(null);
         loading.setContentText("Escrevendo nas bobinas...");
+
         loading.show();
-        Task<ModbusWMCResponseDTO> task = getModbusWMCResponseDTOTask(req, loading);
-        new Thread(task).start();
+        switch(AppContext.getInstance().getTransport().whichProtocol()){
+            case TCP:
+                Task<ModbusWMCTCPResponseDTO> taskTCP = getModbusWMCResponseTCPDTOTask(reqTCP, loading);
+                new Thread(taskTCP).start();
+                break;
+            case RTU:
+                Task<ModbusWMCRTUResponseDTO> taskRTU = getModbusWMCResponseDTOTask(req, loading);
+                new Thread(taskRTU).start();
+                break;
+        }
     }
 
-    private Task<ModbusWMCResponseDTO> getModbusWMCResponseDTOTask(ModbusWMCRequestDTO request, Alert loading) {
-        Task<ModbusWMCResponseDTO> task =
+    private Task<ModbusWMCRTUResponseDTO> getModbusWMCResponseDTOTask(ModbusWMCRTURequestDTO request, Alert loading) {
+        Task<ModbusWMCRTUResponseDTO> task =
                 new Task<>() {
                     @Override
-                    protected ModbusWMCResponseDTO call() throws Exception {
-                        return ModbusService.writeMultipleCoils(request, selectedPort);
+                    protected ModbusWMCRTUResponseDTO call() throws Exception {
+                        SerialPort port = AppContext.getInstance().getSerialPort();
+                        return ModbusService.writeMultipleCoils(request, port);
                     }
                 };
 
         task.setOnSucceeded(event -> {
             loading.close();
 
-            ModbusWMCResponseDTO res = task.getValue();
-
-            txtASentData.setText(ModbusResponse.printFrame(res.getSentBytes(), res.getSentBytes().length));
+            ModbusWMCRTUResponseDTO res = task.getValue();
             txtAReceivedData.setText(ModbusResponse.printFrame(res.getReceivedBytes(), res.getReceivedBytes().length));
             StringBuilder errorMessage = new StringBuilder();
-            if(res.isHasCrcError()){
-                errorMessage.append("Erro no CRC. ");
+            if(res.isHasError()){
+                errorMessage.append("Erro, verifique o CRC, modbus, o endereço e/ou a quantidade de bytes. ");
             }
-            if(res.isHasModbusError()){
-                errorMessage.append("Erro no Modbus. ");
-            }
-            if(res.isHasAddressError()){
-                errorMessage.append("Erro no endereço. ");
-            }
-            if(res.isHasQuantityError()){
-                errorMessage.append("Erro na quantidade de bytes. ");
-            }
-            if(!res.isHasCrcError() && !res.isHasModbusError() && !res.isHasAddressError() && !res.isHasQuantityError()) {
+            if(!res.isHasError()) {
                 errorMessage.append("Sem erros");
             }
             txtAStatus.setText(errorMessage.toString());
+        });
+
+        task.setOnFailed(event -> {
+
+            loading.close();
+
+            task.getException()
+                    .printStackTrace();
+        });
+        return task;
+    }
+
+    private Task<ModbusWMCTCPResponseDTO> getModbusWMCResponseTCPDTOTask(ModbusWMCTCPRequestDTO request, Alert loading) {
+        Task<ModbusWMCTCPResponseDTO> task =
+                new Task<>() {
+                    @Override
+                    protected ModbusWMCTCPResponseDTO call() throws Exception {
+                        MasterTransport transport = AppContext.getInstance().getTransport();
+                        MasterService service = new MasterService(transport);
+                        return service.writeMultipleCoilsTCP(request);
+                    }
+                };
+
+        task.setOnSucceeded(event -> {
+            loading.close();
+
+            ModbusWMCTCPResponseDTO res = task.getValue();
+            txtAReceivedData.setText(ModbusResponse.printFrame(res.getReceivedBytes(), res.getReceivedBytes().length));
+            txtAStatus.setText("Sem erros");
         });
 
         task.setOnFailed(event -> {
@@ -203,26 +242,6 @@ public class ModbusWMCController {
     public void setAddress(){
         String text = inputAddress.getText();
         address = Integer.parseInt(text);
-    }
-
-    public void setSelectedPort() {
-        if (selectedPort != null && selectedPort.isOpen()) {
-            SerialService.disconnect(selectedPort);
-        }
-        selectedPort = serialService.getPort(comboPorts.getValue());
-        SerialService.connect(selectedPort);
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Porta selecionada");
-        alert.setHeaderText(null);
-        alert.setContentText(comboPorts.getValue());
-        alert.showAndWait();
-    }
-
-    private void loadPorts(){
-        comboPorts.getItems().clear();
-
-        var ports = serialService.getAvailablePorts();
-        comboPorts.getItems().addAll(ports);
     }
 
     private void showError(String message) {

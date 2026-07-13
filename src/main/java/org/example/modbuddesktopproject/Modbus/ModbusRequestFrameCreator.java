@@ -1,6 +1,6 @@
 package org.example.modbuddesktopproject.Modbus;
 
-public class ModbusFrame {
+public class ModbusRequestFrameCreator {
     private static final byte READ_HOLDING_REGISTERS = 0x03;
     private static final byte READ_COILS = 0X01;
     private static final byte WRITE_MULTIPLE_COILS = 0x0F;

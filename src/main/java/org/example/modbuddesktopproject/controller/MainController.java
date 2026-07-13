@@ -5,11 +5,16 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.example.modbuddesktopproject.HelloApplication;
-import org.example.modbuddesktopproject.Modbus.ModbusFrame;
 
 public class MainController {
+    @FXML private TextField modeSelected;
+    public void initialize() {
+        modeSelected.setText("Modo "+ AppContext.getInstance().getTransport().whichProtocol() + " selecionado!");
+    }
+
     @FXML
     public void irParaHRWindow(ActionEvent event) {
         try{
@@ -77,22 +82,4 @@ public class MainController {
             e.printStackTrace();
         }
     }
-
-    @FXML
-    public void irParaTCP(ActionEvent event) {
-        try{
-            Stage janela = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
-            janela.close();
-
-            Parent root = FXMLLoader.load(HelloApplication.class.getResource("TCP.fxml"));
-
-            Stage novaJanela = new Stage();
-            novaJanela.setScene(new Scene(root));
-            novaJanela.setTitle("Modbud - A Modbus Communication Project!");
-            novaJanela.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 }

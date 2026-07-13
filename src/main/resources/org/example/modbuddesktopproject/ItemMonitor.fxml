@@ -15,15 +15,8 @@
 
 <AnchorPane prefHeight="720.0" prefWidth="1749.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.modbuddesktopproject.controller.ItemMonitorController">
    <children>
-      <Label layoutX="1005.0" layoutY="68.0" text="Porta COM">
-         <font>
-            <Font size="18.0" />
-         </font>
-      </Label>
-      <ComboBox fx:id="comboPorts" layoutX="1005.0" layoutY="95.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="321.0" />
-      <Button fx:id="btnRefreshPorts" layoutX="1334.0" layoutY="96.0" mnemonicParsing="false" text="Atualizar" />
       <Button layoutX="79.0" layoutY="82.0" mnemonicParsing="false" onAction="#irParaMain" prefHeight="35.0" prefWidth="159.0" text="Voltar para Menu Principal" />
-      <Label layoutX="598.0" layoutY="92.0" text="Monitor de Itens">
+      <Label layoutX="765.0" layoutY="81.0" text="Monitor de Itens">
          <font>
             <Font name="System Bold" size="28.0" />
          </font>
@@ -51,7 +44,7 @@
             <Font size="18.0" />
          </font>
       </Label>
-      <ComboBox fx:id="comboFunctions" layoutX="651.0" layoutY="299.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="173.0" />
+      <ComboBox fx:id="comboFunctions" layoutX="651.0" layoutY="299.0" onAction="#setSelectedFunction" prefHeight="26.0" prefWidth="173.0" />
       <Label layoutX="824.0" layoutY="394.0" prefHeight="27.0" prefWidth="173.0" text="Resposta">
          <font>
             <Font size="18.0" />

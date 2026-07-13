@@ -2,12 +2,13 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
 <AnchorPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.modbuddesktopproject.controller.MainController">
    <children>
-      <Label layoutX="512.0" layoutY="182.0" prefHeight="34.0" prefWidth="258.0" text="Bem vindo ao Modbud!">
+      <Label layoutX="513.0" layoutY="127.0" prefHeight="34.0" prefWidth="258.0" text="Bem vindo ao Modbud!">
          <font>
             <Font name="System Bold" size="23.0" />
          </font>
@@ -16,7 +17,11 @@
       <Button layoutX="593.0" layoutY="320.0" mnemonicParsing="false" onAction="#irParaReadCoils" text="01 - Read Coils" />
       <Button layoutX="569.0" layoutY="411.0" mnemonicParsing="false" onAction="#irParaWMCWindow" text="15 - Write Multiple Coils" />
       <Button layoutX="560.0" layoutY="367.0" mnemonicParsing="false" onAction="#irParaHRWindow" text="03 - Read Holding Registers" />
-      <Button layoutX="607.0" layoutY="510.0" mnemonicParsing="false" onAction="#irParaMonitorItemWindow" text="Monitorar" />
-      <Button fx:id="tcp" layoutX="622.0" layoutY="460.0" mnemonicParsing="false" onAction="#irParaTCP" text="TCP" />
+      <Button layoutX="607.0" layoutY="483.0" mnemonicParsing="false" onAction="#irParaMonitorItemWindow" text="Monitorar" />
+      <TextField fx:id="modeSelected" alignment="CENTER" disable="true" layoutX="523.0" layoutY="183.0" prefHeight="25.0" prefWidth="236.0">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font>
+      </TextField>
    </children>
 </AnchorPane>

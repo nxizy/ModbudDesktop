@@ -5,14 +5,10 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class ModbusResponseDTO {
+public class ModbusRHRRTUResponseDTO {
     private int slaveId;
-    private int functionCode;
     private int address;
-    private int sentByteQuantity;
     private int value;
-    private byte[] sentBytes;
     private byte[] receivedBytes;
-    private boolean hasCrcError;
-    private boolean hasModbusError;
+    private boolean hasError;
 }

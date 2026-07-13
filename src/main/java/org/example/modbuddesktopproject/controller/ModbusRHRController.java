@@ -11,27 +11,30 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.example.modbuddesktopproject.HelloApplication;
 import org.example.modbuddesktopproject.Modbus.ModbusResponse;
+import org.example.modbuddesktopproject.Services.ENUMs.Protocol;
+import org.example.modbuddesktopproject.Services.MasterService;
+import org.example.modbuddesktopproject.Services.MasterTransport;
 import org.example.modbuddesktopproject.Services.ModbusService;
 import org.example.modbuddesktopproject.Services.SerialService;
-import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRequestDTO;
-import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusResponseDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRHRRTURequestDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRHRRTUResponseDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRHRTCPRequestDTO;
+import org.example.modbuddesktopproject.models.ReadHoldingRegisters.ModbusRHRTCPResponseDTO;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.UnaryOperator;
 
 
-public class ModbusController {
+public class ModbusRHRController {
 
     private final SerialService serialService = new SerialService();
 
-    @FXML private ComboBox<String> comboPorts;
-    @FXML private Button btnRefreshPorts;
     @FXML private TextField inputSlaveId;
     @FXML private TextField inputAddress;
     @FXML private TextField inputBitQuantity;
-    @FXML private TextArea txtASentData;
     @FXML private TextArea txtAReceivedData;
     @FXML private TextArea txtAStatus;
-    private SerialPort selectedPort;
+    @FXML private TextField modeSelected;
     private int slaveId;
     private int bitQuantity;
     private int address;
@@ -43,8 +46,6 @@ public class ModbusController {
             janela.close();
 
             Parent root = FXMLLoader.load(HelloApplication.class.getResource("Main.fxml"));
-
-            SerialService.disconnect(selectedPort);
             Stage novaJanela = new Stage();
             novaJanela.setScene(new Scene(root));
             novaJanela.setTitle("Modbud - A Modbus Communication Project!");
@@ -54,10 +55,10 @@ public class ModbusController {
         }
     }
 
-    public void initialize(){
-        btnRefreshPorts.setOnAction(e -> loadPorts());
-        comboPorts.setOnAction(e -> setSelectedPort());
-        loadPorts();
+    public void initialize() {
+        modeSelected.setText("Modo " + AppContext.getInstance().getTransport().whichProtocol() + " selecionado!");
+        boolean tcp = AppContext.getInstance().getTransport().whichProtocol() == Protocol.TCP;
+        boolean rtu = AppContext.getInstance().getTransport().whichProtocol() == Protocol.RTU;
 
         // Filtro para slaveId
         UnaryOperator<TextFormatter.Change> slaveFilter = change -> {
@@ -77,25 +78,8 @@ public class ModbusController {
 
             return null;
         };
-
         inputSlaveId.setTextFormatter(new TextFormatter<>(slaveFilter));
         inputAddress.setTextFormatter(new TextFormatter<>(enderecoFilter));
-
-    }
-
-    public void setSelectedPort() {
-        if (selectedPort != null && selectedPort.isOpen()) {
-            SerialService.disconnect(selectedPort);
-        }
-        selectedPort = serialService.getPort(comboPorts.getValue());
-
-        SerialService.connect(selectedPort);
-
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Porta selecionada");
-        alert.setHeaderText(null);
-        alert.setContentText(comboPorts.getValue());
-        alert.showAndWait();
     }
 
     public void setSlaveId(){
@@ -127,9 +111,16 @@ public class ModbusController {
     }
 
     public void sendModbusRequest() throws InterruptedException {
-        ModbusRequestDTO request = ModbusRequestDTO.builder()
+        ModbusRHRRTURequestDTO request = ModbusRHRRTURequestDTO.builder()
                 .slaveId(slaveId)
                 .address(address)
+                .quantity(bitQuantity)
+                .build();
+        int transactionId = ThreadLocalRandom.current().nextInt(0, 65536);
+        ModbusRHRTCPRequestDTO requestTCP = ModbusRHRTCPRequestDTO.builder()
+                .transactionId(transactionId)
+                .unitId(slaveId)
+                .startAddress(address)
                 .quantity(bitQuantity)
                 .build();
         Alert loading = new Alert(Alert.AlertType.INFORMATION);
@@ -137,17 +128,26 @@ public class ModbusController {
         loading.setHeaderText(null);
         loading.setContentText("Lendo registradores...");
         loading.show();
-        Task<ModbusResponseDTO> task = getModbusResponseDTOTask(request, loading);
-        new Thread(task).start();
-
+        switch(AppContext.getInstance().getTransport().whichProtocol()){
+            case TCP:
+                Task<ModbusRHRTCPResponseDTO> taskTCP = getModbusTCPResponseDTOTask(requestTCP, loading);
+                new Thread(taskTCP).start();
+                break;
+            case RTU:
+                Task<ModbusRHRRTUResponseDTO> taskRTU = getModbusResponseDTOTask(request, loading);
+                new Thread(taskRTU).start();
+                break;
+        }
     }
 
-    private Task<ModbusResponseDTO> getModbusResponseDTOTask(ModbusRequestDTO request, Alert loading) {
-        Task<ModbusResponseDTO> task =
+    private Task<ModbusRHRRTUResponseDTO> getModbusResponseDTOTask(ModbusRHRRTURequestDTO request, Alert loading) {
+
+        Task<ModbusRHRRTUResponseDTO> task =
                 new Task<>() {
                     @Override
-                    protected ModbusResponseDTO call() throws Exception {
-                        return ModbusService.readHoldingRegisters(request, selectedPort);
+                    protected ModbusRHRRTUResponseDTO call() throws Exception {
+                        SerialPort port = AppContext.getInstance().getSerialPort();
+                        return ModbusService.readHoldingRegisters(request, port);
                     }
                 };
 
@@ -155,20 +155,12 @@ public class ModbusController {
 
             loading.close();
 
-            ModbusResponseDTO res = task.getValue();
-
-            txtASentData.setText(ModbusResponse.printFrame(res.getSentBytes(), res.getSentBytes().length));
+            ModbusRHRRTUResponseDTO res = task.getValue();
             txtAReceivedData.setText(ModbusResponse.printFrame(res.getReceivedBytes(), res.getReceivedBytes().length));
-            if(res.isHasCrcError()){
-                txtAStatus.setText("Erro no CRC.");
+            if(res.isHasError()){
+                txtAStatus.setText("Erro, verifique o CRC, e o estado de comunicação do escravo.");
             }
-            if(res.isHasModbusError()){
-                txtAStatus.setText("Erro no Modbus");
-            }
-            if(res.isHasModbusError() && res.isHasCrcError()){
-                txtAStatus.setText("Erro no CRC e no Modbus");
-            }
-            txtAStatus.setText(String.valueOf(ModbusResponse.extractRegisterValue(res.getReceivedBytes())));
+            txtAStatus.setText(String.valueOf(res.getValue()));
         });
 
         task.setOnFailed(event -> {
@@ -181,11 +173,35 @@ public class ModbusController {
         return task;
     }
 
-    private void loadPorts(){
-        comboPorts.getItems().clear();
+    private Task<ModbusRHRTCPResponseDTO> getModbusTCPResponseDTOTask(ModbusRHRTCPRequestDTO request, Alert loading) {
 
-        var ports = serialService.getAvailablePorts();
-        comboPorts.getItems().addAll(ports);
+        Task<ModbusRHRTCPResponseDTO> task =
+                new Task<>() {
+                    @Override
+                    protected ModbusRHRTCPResponseDTO call() throws Exception {
+                        MasterTransport transport = AppContext.getInstance().getTransport();
+                        MasterService service = new MasterService(transport);
+                        return service.readHoldingRegistersTCP(request);
+                    }
+                };
+
+        task.setOnSucceeded(event -> {
+
+            loading.close();
+
+            ModbusRHRTCPResponseDTO res = task.getValue();
+            txtAReceivedData.setText(ModbusResponse.printFrame(res.getReceivedBytes(), res.getReceivedBytes().length));
+            txtAStatus.setText(String.valueOf(res.getValue()));
+        });
+
+        task.setOnFailed(event -> {
+
+            loading.close();
+
+            task.getException()
+                    .printStackTrace();
+        });
+        return task;
     }
 
     private void showError(String message) {

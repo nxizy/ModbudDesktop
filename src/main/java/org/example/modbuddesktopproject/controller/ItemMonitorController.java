@@ -32,15 +32,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 
 public class ItemMonitorController {
-    private final SerialService serialService = new SerialService();
     private final FunctionRequestHandler handler = new FunctionRequestHandler();
 
     @FXML
-    private ComboBox<String> comboPorts;
-    @FXML
     private ComboBox<String> comboFunctions;
-    @FXML private Button btnRefreshPorts;
-    @FXML private Button btnMonitor;
     @FXML private TextField inputSlaveId;
     @FXML private TextField inputAddress;
     @FXML private TextField inputBitQuantity;
@@ -62,13 +57,10 @@ public class ItemMonitorController {
     private TableColumn<MonitorResponse<?>, String> timestampColumn;
     @FXML
     private VBox requestsContainer;
-    @FXML
-    private Button btnAddRequest;
     private final Map<Long, MonitorItem> monitorItemsRequest = new HashMap<>();
     private final ObservableList<MonitorResponse<?>> monitorData = FXCollections.observableArrayList();
     private final Map<Long, MonitorResponse<?>> monitorItemsResponse = new HashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(1);
-    private SerialPort selectedPort;
     private int selectedFunction;
     private String name;
     private int slaveId;
@@ -77,11 +69,6 @@ public class ItemMonitorController {
     private int scanDelay;
 
     public void initialize(){
-        System.out.println(this);
-        btnRefreshPorts.setOnAction(e -> loadPorts());
-        comboPorts.setOnAction(e -> setSelectedPort());
-        comboFunctions.setOnAction(e -> setSelectedFunction());
-        loadPorts();
         loadFunctions();
 
         //Configuração das colunas
@@ -185,7 +172,6 @@ public class ItemMonitorController {
             Parent root = FXMLLoader.load(HelloApplication.class.getResource("Main.fxml"));
 
             handler.shutdown();
-            SerialService.disconnect(selectedPort);
             Stage novaJanela = new Stage();
             novaJanela.setScene(new Scene(root));
             novaJanela.setTitle("Modbud - A Modbus Communication Project!");
@@ -371,22 +357,6 @@ public class ItemMonitorController {
         address = Integer.parseInt(text);
     }
 
-    public void setSelectedPort() {
-        handler.stopAll();
-        if(selectedPort != null){
-            SerialService.disconnect(selectedPort);
-        }
-        selectedPort = serialService.getPort(comboPorts.getValue());
-        handler.setCurrentPort(selectedPort);
-        SerialService.connect(selectedPort);
-
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Porta selecionada");
-        alert.setHeaderText(null);
-        alert.setContentText(comboPorts.getValue());
-        alert.showAndWait();
-    }
-
     public void setSelectedFunction() {
         if(Objects.equals(comboFunctions.getValue(), "01 - Read Multiple Coils")){
             selectedFunction = 1;
@@ -404,13 +374,6 @@ public class ItemMonitorController {
         functions.add("03 - Holding Registers");
 
         comboFunctions.getItems().addAll(functions);
-    }
-
-    private void loadPorts(){
-        comboPorts.getItems().clear();
-
-        var ports = serialService.getAvailablePorts();
-        comboPorts.getItems().addAll(ports);
     }
 
     private void showError(String message) {

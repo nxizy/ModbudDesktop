@@ -6,7 +6,7 @@ import lombok.*;
 @Setter
 @Builder
 
-public class ReadCoilsRequestDTO {
+public class ReadCoilsRTURequestDTO {
     private int slaveId;
     private int address;
     private int quantity;

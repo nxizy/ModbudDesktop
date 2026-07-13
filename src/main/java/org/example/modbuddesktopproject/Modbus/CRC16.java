@@ -61,6 +61,10 @@ public class CRC16 {
     public static byte getHighByte(int n) {
         return (byte) ((n >> 8) & 0xFF);
     }
+
+    public static int uniteByte(byte high, byte low){
+        return ((high & 0xFF) << 8) | ((low & 0xFF));
+    }
 }
 
 

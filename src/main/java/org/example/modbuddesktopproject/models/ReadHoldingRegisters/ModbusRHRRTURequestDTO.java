@@ -5,7 +5,7 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class ModbusRequestDTO {
+public class ModbusRHRRTURequestDTO {
     private int slaveId;
     private int address;
     private int quantity;

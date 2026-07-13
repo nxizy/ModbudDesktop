@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
@@ -37,13 +36,6 @@
          </font>
       </Label>
       <TextField fx:id="inputBitQuantity" layoutX="549.0" layoutY="255.0" onAction="#setBitQuantity" onKeyTyped="#setBitQuantity" prefHeight="25.0" prefWidth="173.0" />
-      <Label layoutX="140.0" layoutY="354.0" text="Porta COM">
-         <font>
-            <Font size="18.0" />
-         </font>
-      </Label>
-      <ComboBox fx:id="comboPorts" layoutX="140.0" layoutY="381.0" onAction="#setSelectedPort" onKeyTyped="#setSelectedPort" prefHeight="26.0" prefWidth="321.0" />
-      <Button fx:id="btnRefreshPorts" layoutX="469.0" layoutY="382.0" mnemonicParsing="false" text="Atualizar" />
       <Button fx:id="btnGenerateCoils" layoutX="556.0" layoutY="288.0" mnemonicParsing="false" onAction="#generateCoils" prefHeight="27.0" prefWidth="158.0" text="Gerar Bobinas" />
       <GridPane fx:id="gridCoils" layoutX="140.0" layoutY="440.0" prefHeight="68.0">
         <columnConstraints>
@@ -56,7 +48,6 @@
           <RowConstraints fillHeight="false" maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="SOMETIMES" />
         </rowConstraints>
       </GridPane>
-      <TextArea fx:id="txtASentData" editable="false" layoutX="801.0" layoutY="68.0" prefHeight="102.0" prefWidth="406.0" />
       <TextArea fx:id="txtAReceivedData" editable="false" layoutX="801.0" layoutY="213.0" prefHeight="102.0" prefWidth="406.0" />
       <TextArea fx:id="txtAStatus" editable="false" layoutX="801.0" layoutY="358.0" prefHeight="50.0" prefWidth="406.0" />
       <Label layoutX="801.0" layoutY="330.0" prefHeight="27.0" prefWidth="79.0" text="Resposta">
@@ -69,12 +60,12 @@
             <Font size="18.0" />
          </font>
       </Label>
-      <Label layoutX="801.0" layoutY="40.0" prefHeight="27.0" prefWidth="150.0" text="Dados Enviados">
-         <font>
-            <Font size="18.0" />
-         </font>
-      </Label>
       <Button fx:id="btnEnviar" layoutX="583.0" layoutY="376.0" mnemonicParsing="false" onAction="#sendModbusWMCRequest" prefHeight="37.0" prefWidth="139.0" text="Enviar" />
       <Button layoutX="69.0" layoutY="72.0" mnemonicParsing="false" onAction="#irParaMain" prefHeight="35.0" prefWidth="159.0" text="Voltar para Menu Principal" />
+      <TextField fx:id="modeSelected" alignment="CENTER" disable="true" layoutX="383.0" layoutY="145.0" prefHeight="25.0" prefWidth="236.0">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font>
+      </TextField>
    </children>
 </AnchorPane>
